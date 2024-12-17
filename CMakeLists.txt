@@ -1,6 +1,18 @@
 cmake_minimum_required(VERSION 3.31.1)
 project(VulkanProject VERSION 0.1 LANGUAGES CXX)
 
-add_executable(${PROJECT_NAME} src/main.cpp)
+find_package(Vulkan REQUIRED)
 
-target_link_libraries(VulkanProject ${CMAKE_DL_LIBS})
+add_compile_definitions(VK_NO_PROTOTYPES)
+
+file(GLOB source CONFIGURE_DEPENDS "src/*.h" "src/*.cpp")
+
+add_executable(${PROJECT_NAME} ${source})
+
+target_include_directories(${PROJECT_NAME}
+PRIVATE
+${Vulkan_INCLUDE_DIRS}
+)
+
+target_link_libraries(${PROJECT_NAME} ${CMAKE_DL_LIBS})
+
