@@ -47,20 +47,20 @@ namespace VulkanProject {
     return true;
   }
 
-  bool LoadAvailableInstanceExtensions( std::vector<VkExtensionProperties> & available_extensions ) {
+  bool EnumerateAvailableInstanceExtensions( std::vector<VkExtensionProperties> & available_extensions ) {
     uint32_t extensions_count = 0;
     VkResult result = VK_SUCCESS;
 
     result = vkEnumerateInstanceExtensionProperties(nullptr, &extensions_count, nullptr);
 
-    if (result != VK_SUCCESS || extensions_count == 0) {
+    if (result != VK_SUCCESS) {
       std::cout << "Couldn't retrieve extension count\n";
       return false;
     }
     
     available_extensions.resize(extensions_count);
 
-    result = vkEnumerateInstanceExtensionProperties(nullptr, &extensions_count, &available_extensions.front());
+    result = vkEnumerateInstanceExtensionProperties(nullptr, &extensions_count, available_extensions.data());
     if (result != VK_SUCCESS) {
       std::cout << "Couldn't enumerate instance extensions\n";
       return false;
@@ -106,7 +106,7 @@ namespace VulkanProject {
 
   bool CreateVulkanInstance( VkInstance & vulkan_instance, VkApplicationInfo const & application_info, std::vector<const char *> const & desired_extensions ) {
     std::vector<VkExtensionProperties> available_extensions;
-    if (!LoadAvailableInstanceExtensions(available_extensions)) {
+    if (!EnumerateAvailableInstanceExtensions(available_extensions)) {
       return false;
     }
 
@@ -137,7 +137,7 @@ namespace VulkanProject {
 
   bool LoadInstanceLevelFunctions( VkInstance const & vulkan_instance, std::vector<char const *> const & enabled_extensions) {
     #define INSTANCE_LEVEL_VULKAN_FUNCTION( name )                                \
-      name = (PFN_##name)vkGetInstanceProcAddr( vulkan_instance, #name );                \
+      name = (PFN_##name)vkGetInstanceProcAddr( vulkan_instance, #name );         \
       if( name == nullptr ) {                                                     \
         std::cout << "Could not load instance-level Vulkan function named: "      \
           #name << std::endl;                                                     \
@@ -148,7 +148,7 @@ namespace VulkanProject {
     #define INSTANCE_LEVEL_VULKAN_FUNCTION_FROM_EXTENSION( name, extension )      \
       for( auto & enabled_extension : enabled_extensions ) {                      \
         if( std::string( enabled_extension ) == std::string( extension ) ) {      \
-          name = (PFN_##name)vkGetInstanceProcAddr( vulkan_instance, #name );            \
+          name = (PFN_##name)vkGetInstanceProcAddr( vulkan_instance, #name );     \
           if( name == nullptr ) {                                                 \
             std::cout << "Could not load instance-level Vulkan function named: "  \
               #name << std::endl;                                                 \
@@ -157,10 +157,78 @@ namespace VulkanProject {
         }                                                                         \
       }
 
-      #include "ListOfVulkanFunctions.inl"
+    #include "ListOfVulkanFunctions.inl"
 
-      return true;
+    return true;
+  }
+
+  bool EnumerateAvailablePhysicalDevices(
+    VkInstance const & vulkan_instance,
+    std::vector<VkPhysicalDevice> & available_devices
+  ) {
+    uint32_t devices_count = 0;
+    VkResult result = VK_SUCCESS;
+
+    result = vkEnumeratePhysicalDevices(vulkan_instance, &devices_count, nullptr);
+    if (result != VK_SUCCESS) {
+      std::cout << "Could not get number of available physical devices\n";
+      return false;
     }
+
+    if (!devices_count) {
+      std::cout << "No available physical devices\n";
+      return false;
+    }
+
+    available_devices.resize(devices_count);
+    result = vkEnumeratePhysicalDevices(vulkan_instance, &devices_count, available_devices.data());
+
+    if (result != VK_SUCCESS) {
+      std::cout << "Could not enumerate physical devices\n";
+      return false;
+    }
+
+    return true;
+  }
+
+  bool EnumerateAvailableDeviceExtensions ( 
+    VkPhysicalDevice physical_device, 
+    std::vector<VkExtensionProperties> & available_extensions
+  ) {
+    uint32_t extension_count = 0;
+    VkResult result = VK_SUCCESS;
+
+    result = vkEnumerateDeviceExtensionProperties( physical_device, nullptr, &extension_count, nullptr );
+    if (result != VK_SUCCESS) {
+      std::cout << "Could not get the number of device extensions\n";
+
+      return false;
+    }
+
+    available_extensions.resize(extension_count);
+    result = vkEnumerateDeviceExtensionProperties(
+      physical_device, nullptr, 
+      &extension_count, 
+      available_extensions.data()
+    );
+
+    if (result != VK_SUCCESS) {
+      std::cout << "Could not enumerate device extensions\n";
+      return false;
+    }
+
+    return true;
+  }
+
+  void GetFeaturesAndPropertiesOfPhysicalDevice( 
+    VkPhysicalDevice physical_device,
+    VkPhysicalDeviceFeatures & device_features,
+    VkPhysicalDeviceProperties & device_properties 
+  ) {
+    vkGetPhysicalDeviceFeatures( physical_device, &device_features );
+
+    vkGetPhysicalDeviceProperties( physical_device, &device_properties );
+  };
 } // namespace VulkanProject
 
 

@@ -39,5 +39,20 @@ int main()
   success = VulkanProject::LoadInstanceLevelFunctions(vulkan_instance, desired_extensions);
   if (!success) return EXIT_FAILURE;
 
+  std::vector<VkPhysicalDevice> available_devices;
+  success = VulkanProject::EnumerateAvailablePhysicalDevices(vulkan_instance, available_devices);
+  if (!success) return EXIT_FAILURE;
+
+  std::cout << available_devices.size() << " physical physical_device(s) available:\n";
+
+  for (auto physical_device : available_devices) {
+    VkPhysicalDeviceProperties properties;
+    VkPhysicalDeviceFeatures features;
+
+    VulkanProject::GetFeaturesAndPropertiesOfPhysicalDevice(physical_device, features, properties);
+
+    std::cout << "\t" << properties.deviceName << "\n";
+  }
+
   return EXIT_SUCCESS;
 }
