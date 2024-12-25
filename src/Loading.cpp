@@ -229,6 +229,28 @@ namespace VulkanProject {
 
     vkGetPhysicalDeviceProperties( physical_device, &device_properties );
   };
+
+  bool EnumerateAvailableQueueFamiliesAndTheirProperties(
+    VkPhysicalDevice physical_device,
+    std::vector<VkQueueFamilyProperties> & queue_families
+  ) {
+    uint32_t queue_families_count = 0;
+
+    vkGetPhysicalDeviceQueueFamilyProperties( physical_device, &queue_families_count, nullptr );
+    if( queue_families_count == 0 ) {
+      std::cout << "Could not get the number of queue families\n";
+      return false;
+    }
+
+    queue_families.resize( queue_families_count );
+    vkGetPhysicalDeviceQueueFamilyProperties( physical_device, &queue_families_count, queue_families.data() );
+    if( queue_families_count == 0 ) {
+      std::cout << "Could not acquire properties of queue families\n";
+      return false;
+    }
+
+    return true;
+  }
 } // namespace VulkanProject
 
 

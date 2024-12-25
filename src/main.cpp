@@ -52,8 +52,8 @@ int main()
     VulkanProject::GetFeaturesAndPropertiesOfPhysicalDevice(physical_device, features, properties);
 
     std::cout << "\t" << properties.deviceName << ' ';
-    if (properties.deviceType == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU) std::cout << "(discrete)";
-    if (properties.deviceType == VK_PHYSICAL_DEVICE_TYPE_INTEGRATED_GPU) std::cout << "(intergrated)";
+    if (properties.deviceType == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU) std::cout << "(Discrete)";
+    if (properties.deviceType == VK_PHYSICAL_DEVICE_TYPE_INTEGRATED_GPU) std::cout << "(Intergrated)";
     std::cout << '\n';
 
     std::vector<VkExtensionProperties> available_extensions;

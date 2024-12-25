@@ -26,10 +26,14 @@ GLOBAL_LEVEL_VULKAN_FUNCTION( vkCreateInstance )
 
 INSTANCE_LEVEL_VULKAN_FUNCTION( vkEnumeratePhysicalDevices )
 INSTANCE_LEVEL_VULKAN_FUNCTION( vkEnumerateDeviceExtensionProperties )
-INSTANCE_LEVEL_VULKAN_FUNCTION( vkGetPhysicalDeviceProperties )
 INSTANCE_LEVEL_VULKAN_FUNCTION( vkGetPhysicalDeviceFeatures )
+INSTANCE_LEVEL_VULKAN_FUNCTION( vkGetPhysicalDeviceProperties )
+INSTANCE_LEVEL_VULKAN_FUNCTION( vkGetPhysicalDeviceQueueFamilyProperties )
+INSTANCE_LEVEL_VULKAN_FUNCTION( vkGetPhysicalDeviceMemoryProperties )
+INSTANCE_LEVEL_VULKAN_FUNCTION( vkGetPhysicalDeviceFormatProperties )
 INSTANCE_LEVEL_VULKAN_FUNCTION( vkCreateDevice )
 INSTANCE_LEVEL_VULKAN_FUNCTION( vkGetDeviceProcAddr )
+INSTANCE_LEVEL_VULKAN_FUNCTION( vkDestroyInstance )
 
 #undef INSTANCE_LEVEL_VULKAN_FUNCTION
 

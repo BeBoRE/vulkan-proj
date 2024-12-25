@@ -40,4 +40,8 @@ namespace VulkanProject {
     VkPhysicalDeviceFeatures & device_features,
     VkPhysicalDeviceProperties & device_properties 
   );
+  bool EnumerateAvailableQueueFamiliesAndTheirProperties(
+    VkPhysicalDevice physical_device,
+    std::vector<VkQueueFamilyProperties> & queue_families
+  );
 }
