@@ -17,20 +17,26 @@ int main()
   success = VulkanProject::LoadGlobalLevelFunctions();
   if (!success) return EXIT_FAILURE;
 
-  std::vector<VkExtensionProperties> available_extensions;
-  success = VulkanProject::LoadAvailableInstanceExtensions(available_extensions);
-  if (!success) return EXIT_FAILURE;
-
-  std::cout << "Available Instance Extensions:\n";
-  for (auto extension : available_extensions) {
-    std::cout << extension.extensionName << "\n";
-  }
-
-  std::vector<const char *> desired_extensions = {
-    "bla bla bla, this aint it"
+  VkApplicationInfo application_info = {
+    VK_STRUCTURE_TYPE_APPLICATION_INFO,
+    nullptr,
+    "Vulkan thing",
+    VK_MAKE_VERSION(1, 0, 0),
+    "My own :D",
+    VK_MAKE_VERSION(1, 0, 0),
+    VK_MAKE_VERSION(1, 0, 0)
   };
 
-  success = VulkanProject::CheckDesiredExtensions(available_extensions, desired_extensions);
+  std::vector<const char *> desired_extensions = {
+    "VK_KHR_xlib_surface"
+  };
+
+  VkInstance vulkan_instance;
+
+  success = VulkanProject::CreateVulkanInstance(vulkan_instance, application_info, desired_extensions);
+  if (!success) return EXIT_FAILURE;
+
+  success = VulkanProject::LoadInstanceLevelFunctions(vulkan_instance, desired_extensions);
   if (!success) return EXIT_FAILURE;
 
   return EXIT_SUCCESS;

@@ -69,21 +69,98 @@ namespace VulkanProject {
     return true;
   }
 
-  bool CheckDesiredExtensions( std::vector<VkExtensionProperties> & available_extensions, std::vector<char const *> & desired_extensions ) {
+  bool CheckDesiredExtensions( std::vector<VkExtensionProperties> & available_extensions, std::vector<char const *> const & desired_extensions ) {
+    std::vector<std::string> not_found_extensions;
+    
     for (auto desired : desired_extensions) {
+      bool found = false;
       for (auto available : available_extensions) {
         if (!std::strcmp(available.extensionName, desired)) {
+          found = true;
           break;
         };
-
-        std::cout << "Could not find extension " << desired << std::endl;
-
-        return false;
       }
+
+      if (!found) {
+        not_found_extensions.push_back(desired);
+      }
+    }
+
+    if (not_found_extensions.size()) {
+      std::cout << "Could not find extension(s):\n";
+      for(auto extension : not_found_extensions) {
+        std::cout << "\t" << extension << "\n";
+      }
+      std::cout << "\n";
+
+      std::cout << "Available extensions:" << "\n";
+      for(auto available : available_extensions) {
+        std::cout << "\t" << available.extensionName << "\n";
+      }
+
+      return false;
     }
 
     return true;
   }
+
+  bool CreateVulkanInstance( VkInstance & vulkan_instance, VkApplicationInfo const & application_info, std::vector<const char *> const & desired_extensions ) {
+    std::vector<VkExtensionProperties> available_extensions;
+    if (!LoadAvailableInstanceExtensions(available_extensions)) {
+      return false;
+    }
+
+    if (!CheckDesiredExtensions(available_extensions, desired_extensions)) {
+      return false;
+    }
+
+    VkInstanceCreateInfo instance_create_info = {
+      VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO,
+      nullptr,
+      0,
+      &application_info,
+      0,
+      nullptr,
+      static_cast<uint32_t>(desired_extensions.size()),
+      desired_extensions.data()
+    };
+
+    VkResult result = vkCreateInstance( &instance_create_info, nullptr, &vulkan_instance);
+
+    if (result != VK_SUCCESS || vulkan_instance == VK_NULL_HANDLE) {
+      std::cout << "Could not create Vulkan instance\n";
+      return false;
+    }
+
+    return true;
+  }
+
+  bool LoadInstanceLevelFunctions( VkInstance const & vulkan_instance, std::vector<char const *> const & enabled_extensions) {
+    #define INSTANCE_LEVEL_VULKAN_FUNCTION( name )                                \
+      name = (PFN_##name)vkGetInstanceProcAddr( vulkan_instance, #name );                \
+      if( name == nullptr ) {                                                     \
+        std::cout << "Could not load instance-level Vulkan function named: "      \
+          #name << std::endl;                                                     \
+        return false;                                                             \
+      }
+
+    // Load instance-level functions from enabled extensions
+    #define INSTANCE_LEVEL_VULKAN_FUNCTION_FROM_EXTENSION( name, extension )      \
+      for( auto & enabled_extension : enabled_extensions ) {                      \
+        if( std::string( enabled_extension ) == std::string( extension ) ) {      \
+          name = (PFN_##name)vkGetInstanceProcAddr( vulkan_instance, #name );            \
+          if( name == nullptr ) {                                                 \
+            std::cout << "Could not load instance-level Vulkan function named: "  \
+              #name << std::endl;                                                 \
+            return false;                                                         \
+          }                                                                       \
+        }                                                                         \
+      }
+
+      #include "ListOfVulkanFunctions.inl"
+
+      return true;
+    }
 } // namespace VulkanProject
 
 
