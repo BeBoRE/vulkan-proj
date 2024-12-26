@@ -196,23 +196,23 @@ namespace VulkanProject {
   }
 
   bool EnumerateDeviceExtensions ( 
-    VkPhysicalDevice physical_device, 
+    VkPhysicalDevice physicalDevice, 
     std::vector<VkExtensionProperties> & availableExtensions
   ) {
-    uint32_t extension_count = 0;
+    uint32_t extensionCount = 0;
     VkResult result = VK_SUCCESS;
 
-    result = vkEnumerateDeviceExtensionProperties( physical_device, nullptr, &extension_count, nullptr );
+    result = vkEnumerateDeviceExtensionProperties( physicalDevice, nullptr, &extensionCount, nullptr );
     if (result != VK_SUCCESS) {
       std::cout << "Could not get the number of device extensions\n";
 
       return false;
     }
 
-    availableExtensions.resize(extension_count);
+    availableExtensions.resize(extensionCount);
     result = vkEnumerateDeviceExtensionProperties(
-      physical_device, nullptr, 
-      &extension_count, 
+      physicalDevice, nullptr, 
+      &extensionCount, 
       availableExtensions.data()
     );
 
@@ -225,27 +225,27 @@ namespace VulkanProject {
   }
 
   void GetPropertiesPhysicalDevice( 
-    VkPhysicalDevice physical_device,
-    VkPhysicalDeviceProperties & device_properties 
+    VkPhysicalDevice physicalDevice,
+    VkPhysicalDeviceProperties & deviceProperties 
   ) {
-    vkGetPhysicalDeviceProperties( physical_device, &device_properties );
+    vkGetPhysicalDeviceProperties( physicalDevice, &deviceProperties );
   };
 
   bool EnumerateQueueFamilyAndProperties(
-    VkPhysicalDevice physical_device,
-    std::vector<VkQueueFamilyProperties> & queue_families
+    VkPhysicalDevice physicalDevice,
+    std::vector<VkQueueFamilyProperties> & queueFamilies
   ) {
-    uint32_t queue_families_count = 0;
+    uint32_t queueFamiliesCount = 0;
 
-    vkGetPhysicalDeviceQueueFamilyProperties( physical_device, &queue_families_count, nullptr );
-    if( queue_families_count == 0 ) {
+    vkGetPhysicalDeviceQueueFamilyProperties( physicalDevice, &queueFamiliesCount, nullptr );
+    if( queueFamiliesCount == 0 ) {
       std::cout << "Could not get the number of queue families\n";
       return false;
     }
 
-    queue_families.resize( queue_families_count );
-    vkGetPhysicalDeviceQueueFamilyProperties( physical_device, &queue_families_count, queue_families.data() );
-    if( queue_families_count == 0 ) {
+    queueFamilies.resize( queueFamiliesCount );
+    vkGetPhysicalDeviceQueueFamilyProperties( physicalDevice, &queueFamiliesCount, queueFamilies.data() );
+    if( queueFamiliesCount == 0 ) {
       std::cout << "Could not acquire properties of queue families\n";
       return false;
     }
@@ -254,19 +254,19 @@ namespace VulkanProject {
   }
 
   bool IndexOfDesiredQueueFamily(
-    VkPhysicalDevice const & physical_device,
-    VkQueueFlags const & desired_capabilities,
-    uint32_t & queue_family_index
+    VkPhysicalDevice const & physicalDevice,
+    VkQueueFlags const & desiredCapabilities,
+    uint32_t & queueFamilyIndex
   ) {
-    std::vector<VkQueueFamilyProperties> queue_family_properties;
-    if (!VulkanProject::EnumerateQueueFamilyAndProperties(physical_device, queue_family_properties)) {
+    std::vector<VkQueueFamilyProperties> queueFamilyProperties;
+    if (!VulkanProject::EnumerateQueueFamilyAndProperties(physicalDevice, queueFamilyProperties)) {
       return false;
     }
 
-    for (u_int32_t index = 0; index < static_cast<u_int8_t>(queue_family_properties.size()); index = index + 1) {
-      auto queue_family = queue_family_properties[index];
-      if (queue_family.queueFlags & desired_capabilities == desired_capabilities) {
-        queue_family_index = index;
+    for (u_int32_t index = 0; index < static_cast<u_int8_t>(queueFamilyProperties.size()); index = index + 1) {
+      auto queue_family = queueFamilyProperties[index];
+      if (queue_family.queueFlags & desiredCapabilities == desiredCapabilities) {
+        queueFamilyIndex = index;
         return true;
       }
     }
