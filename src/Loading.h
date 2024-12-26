@@ -13,6 +13,10 @@ namespace VulkanProject {
   bool ConnectVulkanLoader( LIBRARY_TYPE & vulkanLibrary );
   bool LoadExportedVulkanLoaderLibaryFunction( LIBRARY_TYPE const & vulkanLibrary );
   bool LoadGlobalLevelFunctions();
+  bool LoadDeviceLevelFunctions(
+    VkDevice logicalDevice,
+    std::vector<char const *> const & enabledExtensions
+  );
   bool EnumerateInstanceExtensions( std::vector<VkExtensionProperties> & availableExtensions );
   bool CheckDesiredExtensions(
     std::vector<VkExtensionProperties> & availableExtensions, 
@@ -39,6 +43,10 @@ namespace VulkanProject {
     VkPhysicalDevice physicalDevice,
     VkPhysicalDeviceProperties & deviceProperties 
   );
+  void GetFeaturesPhysicalDevice( 
+    VkPhysicalDevice physicalDevice,
+    VkPhysicalDeviceFeatures & deviceFeatures
+  );
   bool EnumerateQueueFamilyAndProperties(
     VkPhysicalDevice physicalDevice,
     std::vector<VkQueueFamilyProperties> & queueFamilies
@@ -60,4 +68,14 @@ namespace VulkanProject {
     VkPhysicalDeviceFeatures * desiredFeatures,
     VkDevice & logicalDevice
   );
+  void GetDeviceQueue(VkDevice logicalDevice, uint32_t queueFamilyIndex, uint32_t queueIndex, VkQueue & queue);
+  bool CreateLogicalDeviceWithComputeGraphics(
+    VkInstance instance,
+    VkDevice & logicalDevice,
+    VkQueue & graphicsQueue,
+    VkQueue & computeQueue
+  );
+  void DestroyVulkanInstance( VkInstance & vulkanInstance );
+  void DestroyLogicalDevice( VkDevice & logicalDevice );
+  void CloseVulkanLoader( LIBRARY_TYPE & vulkanLibrary );
 }

@@ -20,8 +20,8 @@ namespace VulkanProject {
   }
 
   bool LoadExportedVulkanLoaderLibaryFunction(LIBRARY_TYPE const & vulkanLibrary) {
-    #define EXPORTED_VULKAN_FUNCTION( name )                              \
-    name = (PFN_##name)LoadFunction( vulkanLibrary, #name );         \
+    #define EXPORTED_VULKAN_FUNCTION( name )                          \
+    name = (PFN_##name)LoadFunction( vulkanLibrary, #name );          \
     if( name == nullptr ) {                                           \
       std::cout << "Could not load exported Vulkan function named: "  \
         #name << std::endl;                                           \
@@ -141,7 +141,7 @@ namespace VulkanProject {
 
   bool LoadInstanceLevelFunctions( VkInstance const & vulkanInstance, std::vector<char const *> const & enabledExtensions) {
     #define INSTANCE_LEVEL_VULKAN_FUNCTION( name )                                \
-      name = (PFN_##name)vkGetInstanceProcAddr( vulkanInstance, #name );         \
+      name = (PFN_##name)vkGetInstanceProcAddr( vulkanInstance, #name );          \
       if( name == nullptr ) {                                                     \
         std::cout << "Could not load instance-level Vulkan function named: "      \
           #name << std::endl;                                                     \
@@ -150,11 +150,40 @@ namespace VulkanProject {
 
     // Load instance-level functions from enabled extensions
     #define INSTANCE_LEVEL_VULKAN_FUNCTION_FROM_EXTENSION( name, extension )      \
-      for( auto & enabled_extension : enabledExtensions ) {                      \
+      for( auto & enabled_extension : enabledExtensions ) {                       \
         if( std::string( enabled_extension ) == std::string( extension ) ) {      \
-          name = (PFN_##name)vkGetInstanceProcAddr( vulkanInstance, #name );     \
+          name = (PFN_##name)vkGetInstanceProcAddr( vulkanInstance, #name );      \
           if( name == nullptr ) {                                                 \
             std::cout << "Could not load instance-level Vulkan function named: "  \
+              #name << std::endl;                                                 \
+            return false;                                                         \
+          }                                                                       \
+        }                                                                         \
+      }
+
+    #include "ListOfVulkanFunctions.inl"
+
+    return true;
+  }
+
+  bool LoadDeviceLevelFunctions(
+    VkDevice logicalDevice,
+    std::vector<char const *> const & enabledExtensions
+  ) {
+    #define DEVICE_LEVEL_VULKAN_FUNCTION( name )                                  \
+      name = (PFN_##name)vkGetDeviceProcAddr( logicalDevice, #name );             \
+      if( name == nullptr ) {                                                     \
+        std::cout << "Could not load device-level Vulkan function named: "        \
+          #name << std::endl;                                                     \
+        return false;                                                             \
+      }
+
+    #define DEVICE_LEVEL_VULKAN_FUNCTION_FROM_EXTENSION( name, extension )        \
+      for( auto & enabledExtension : enabledExtensions ) {                        \
+        if( std::string( enabledExtension ) == std::string( extension ) ) {       \
+          name = (PFN_##name)vkGetDeviceProcAddr( logicalDevice, #name );         \
+          if( name == nullptr ) {                                                 \
+            std::cout << "Could not load device-level Vulkan function named: "    \
               #name << std::endl;                                                 \
             return false;                                                         \
           }                                                                       \
@@ -253,6 +282,13 @@ namespace VulkanProject {
     return true;
   }
 
+  void GetFeaturesPhysicalDevice( 
+    VkPhysicalDevice physicalDevice,
+    VkPhysicalDeviceFeatures & deviceFeatures
+  ) {
+    vkGetPhysicalDeviceFeatures( physicalDevice, &deviceFeatures );
+  }
+
   bool IndexOfQueueFamilyWith(
     VkPhysicalDevice const & physicalDevice,
     VkQueueFlags const & desiredCapabilities,
@@ -322,6 +358,91 @@ namespace VulkanProject {
     }
 
     return true;
+  }
+
+  void GetDeviceQueue(
+    VkDevice logicalDevice, 
+    uint32_t queueFamilyIndex, 
+    uint32_t queueIndex, 
+    VkQueue & queue
+  ) {
+    vkGetDeviceQueue(logicalDevice, queueFamilyIndex, queueIndex, &queue);
+  }
+
+  bool CreateLogicalDeviceWithComputeGraphics(
+    VkInstance instance,
+    VkDevice & logicalDevice,
+    VkQueue & graphicsQueue,
+    VkQueue & computeQueue
+  ) {
+    std::vector<VkPhysicalDevice> physicalDevices;
+    if (!EnumeratePhysicalDevices(instance, physicalDevices)) {
+      return false;
+    }
+
+    for (auto & physicalDevice : physicalDevices) {
+      VkPhysicalDeviceFeatures deviceFeatures;
+      GetFeaturesPhysicalDevice(physicalDevice, deviceFeatures);
+
+      VkPhysicalDeviceProperties deviceProperties;
+      GetPropertiesPhysicalDevice(physicalDevice, deviceProperties);
+
+      if (!deviceFeatures.geometryShader) {
+        continue;
+      }
+
+      uint32_t graphicsQueueFamilyIndex;
+      if (!IndexOfQueueFamilyWith(physicalDevice, VK_QUEUE_GRAPHICS_BIT, graphicsQueueFamilyIndex)) {
+        continue;
+      }
+
+      uint32_t computeQueueFamilyIndex;
+      if (!IndexOfQueueFamilyWith(physicalDevice, VK_QUEUE_COMPUTE_BIT, computeQueueFamilyIndex)) {
+        continue;
+      }
+
+      std::vector<QueueInfo> queueInfos = {
+        { graphicsQueueFamilyIndex, { 1.0f } }
+      };
+
+      if (graphicsQueueFamilyIndex != computeQueueFamilyIndex) {
+        queueInfos.push_back({ computeQueueFamilyIndex, { 1.0f } });
+      }
+
+      if (!CreateLogicalDevice(physicalDevice, queueInfos, {}, &deviceFeatures, logicalDevice)) {
+        continue;
+      } else {
+        if (!LoadDeviceLevelFunctions(logicalDevice, {})) {
+          return false;
+        }
+
+        GetDeviceQueue(logicalDevice, graphicsQueueFamilyIndex, 0, graphicsQueue);
+        GetDeviceQueue(logicalDevice, computeQueueFamilyIndex, 0, computeQueue);
+        return true;
+      }
+    }
+
+    return false;
+  }
+
+  void DestroyVulkanInstance( VkInstance & vulkanInstance ) {
+    vkDestroyInstance(vulkanInstance, nullptr);
+    vulkanInstance = VK_NULL_HANDLE;
+  }
+
+  void DestroyLogicalDevice( VkDevice & logicalDevice ) {
+    vkDestroyDevice(logicalDevice, nullptr);
+    logicalDevice = VK_NULL_HANDLE;
+  }
+
+  void CloseVulkanLoader( LIBRARY_TYPE & vulkanLibrary ) {
+    #if defined _WIN32
+      FreeLibrary( vulkanLibrary );
+    #elif defined __linux
+      dlclose( vulkanLibrary );
+    #endif
+
+    vulkanLibrary = nullptr;
   }
 } // namespace VulkanProject
 
