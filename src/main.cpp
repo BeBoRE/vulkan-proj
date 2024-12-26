@@ -80,7 +80,7 @@ int main()
   auto physical_device = availableDevices[0];
   u_int32_t queue_family_index;
 
-  success = VulkanProject::IndexOfDesiredQueueFamily(physical_device, VK_QUEUE_GRAPHICS_BIT, queue_family_index);
+  success = VulkanProject::IndexOfQueueFamilyWith(physical_device, VK_QUEUE_GRAPHICS_BIT, queue_family_index);
   if (!success) return EXIT_FAILURE;
 
   std::cout << "Selected index " << queue_family_index << "\n";

@@ -253,7 +253,7 @@ namespace VulkanProject {
     return true;
   }
 
-  bool IndexOfDesiredQueueFamily(
+  bool IndexOfQueueFamilyWith(
     VkPhysicalDevice const & physicalDevice,
     VkQueueFlags const & desiredCapabilities,
     uint32_t & queueFamilyIndex
@@ -272,6 +272,56 @@ namespace VulkanProject {
     }
 
     return false;
+  }
+
+  bool CreateLogicalDevice(
+    VkPhysicalDevice physicalDevice,
+    std::vector<QueueInfo> queueInfos,
+    std::vector<char const *> desiredExtensions,
+    VkPhysicalDeviceFeatures * desiredFeatures,
+    VkDevice & logicalDevice
+  ) {
+    std::vector<VkExtensionProperties> availableExtensions;
+    if (!EnumerateDeviceExtensions(physicalDevice, availableExtensions)) {
+      return false;
+    }
+
+    if (!CheckDesiredExtensions(availableExtensions, desiredExtensions)) {
+      return false;
+    }
+  
+    std::vector<VkDeviceQueueCreateInfo> queueCreateInfos;
+
+    for (auto & info : queueInfos) {
+      queueCreateInfos.push_back({
+        VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO,
+        nullptr,
+        0,
+        info.index,
+        static_cast<uint32_t>(info.priorities.size()),
+        info.priorities.data()
+      });
+    }
+
+    VkDeviceCreateInfo deviceCreateInfo = {
+      VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO,
+      nullptr,
+      0,
+      static_cast<uint32_t>(queueCreateInfos.size()),
+      queueCreateInfos.data(),
+      0,
+      nullptr,
+      static_cast<uint32_t>(desiredExtensions.size()),
+      desiredExtensions.data()
+    };
+
+    VkResult result = vkCreateDevice(physicalDevice, &deviceCreateInfo, nullptr, &logicalDevice);
+    if(result != VK_SUCCESS || logicalDevice == VK_NULL_HANDLE) {
+      std::cout << "Unable to create logical device\n";
+      return false;
+    }
+
+    return true;
   }
 } // namespace VulkanProject
 

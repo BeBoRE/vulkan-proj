@@ -31,7 +31,7 @@ namespace VulkanProject {
     VkInstance const & vulkanInstance,
     std::vector<VkPhysicalDevice> & availableDevices
   );
-  bool EnumerateDeviceExtensions ( 
+  bool EnumerateDeviceExtensions( 
     VkPhysicalDevice physicalDevice, 
     std::vector<VkExtensionProperties> & availableExtensions
   );
@@ -43,9 +43,21 @@ namespace VulkanProject {
     VkPhysicalDevice physicalDevice,
     std::vector<VkQueueFamilyProperties> & queueFamilies
   );
-  bool IndexOfDesiredQueueFamily(
+  bool IndexOfQueueFamilyWith(
     VkPhysicalDevice const & physicalDevice,
     VkQueueFlags const & desiredCapabilities,
     uint32_t & queueFamilyIndex
+  );
+  struct QueueInfo {
+    uint32_t index;
+    std::vector<float> priorities;
+  };
+
+  bool CreateLogicalDevice(
+    VkPhysicalDevice physicalDevice,
+    std::vector<QueueInfo> queueInfos,
+    std::vector<char const *> desiredExtensions,
+    VkPhysicalDeviceFeatures * desiredFeatures,
+    VkDevice & logicalDevice
   );
 }
