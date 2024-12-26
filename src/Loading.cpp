@@ -5,23 +5,23 @@
 #include "Loading.h"
 
 namespace VulkanProject {
-  bool ConnectVulkanLoader( LIBRARY_TYPE & vulkan_library ) {
+  bool ConnectVulkanLoader( LIBRARY_TYPE & vulkanLibrary ) {
     #if defined _WIN32
-        vulkan_library = LoadLibrary( "vulkan-1.dll" );
+        vulkanLibrary = LoadLibrary( "vulkan-1.dll" );
     #elif defined __linux
-        vulkan_library = dlopen( "libvulkan.so.1", RTLD_NOW );
+        vulkanLibrary = dlopen( "libvulkan.so.1", RTLD_NOW );
     #endif
 
-    if( vulkan_library == nullptr ) {
+    if( vulkanLibrary == nullptr ) {
       std::cout << "Could not connect with a Vulkan Runtime library." << std::endl;
       return false;
     }
     return true;
   }
 
-  bool LoadExportedVulkanLoaderLibaryFunction(LIBRARY_TYPE const & vulkan_library) {
+  bool LoadExportedVulkanLoaderLibaryFunction(LIBRARY_TYPE const & vulkanLibrary) {
     #define EXPORTED_VULKAN_FUNCTION( name )                              \
-    name = (PFN_##name)LoadFunction( vulkan_library, #name );         \
+    name = (PFN_##name)LoadFunction( vulkanLibrary, #name );         \
     if( name == nullptr ) {                                           \
       std::cout << "Could not load exported Vulkan function named: "  \
         #name << std::endl;                                           \
@@ -47,20 +47,20 @@ namespace VulkanProject {
     return true;
   }
 
-  bool EnumerateAvailableInstanceExtensions( std::vector<VkExtensionProperties> & available_extensions ) {
-    uint32_t extensions_count = 0;
+  bool EnumerateInstanceExtensions( std::vector<VkExtensionProperties> & availableExtensions ) {
+    uint32_t extensionCount = 0;
     VkResult result = VK_SUCCESS;
 
-    result = vkEnumerateInstanceExtensionProperties(nullptr, &extensions_count, nullptr);
+    result = vkEnumerateInstanceExtensionProperties(nullptr, &extensionCount, nullptr);
 
     if (result != VK_SUCCESS) {
       std::cout << "Couldn't retrieve extension count\n";
       return false;
     }
     
-    available_extensions.resize(extensions_count);
+    availableExtensions.resize(extensionCount);
 
-    result = vkEnumerateInstanceExtensionProperties(nullptr, &extensions_count, available_extensions.data());
+    result = vkEnumerateInstanceExtensionProperties(nullptr, &extensionCount, availableExtensions.data());
     if (result != VK_SUCCESS) {
       std::cout << "Couldn't enumerate instance extensions\n";
       return false;
@@ -69,12 +69,12 @@ namespace VulkanProject {
     return true;
   }
 
-  bool CheckDesiredExtensions( std::vector<VkExtensionProperties> & available_extensions, std::vector<char const *> const & desired_extensions ) {
-    std::vector<std::string> not_found_extensions;
+  bool CheckDesiredExtensions( std::vector<VkExtensionProperties> & availableExtensions, std::vector<char const *> const & desiredExtensions ) {
+    std::vector<std::string> notFoundExtensions;
     
-    for (auto desired : desired_extensions) {
+    for (auto desired : desiredExtensions) {
       bool found = false;
-      for (auto available : available_extensions) {
+      for (auto available : availableExtensions) {
         if (!std::strcmp(available.extensionName, desired)) {
           found = true;
           break;
@@ -82,19 +82,19 @@ namespace VulkanProject {
       }
 
       if (!found) {
-        not_found_extensions.push_back(desired);
+        notFoundExtensions.push_back(desired);
       }
     }
 
-    if (not_found_extensions.size()) {
+    if (notFoundExtensions.size()) {
       std::cout << "Could not find extension(s):\n";
-      for(auto extension : not_found_extensions) {
+      for(auto extension : notFoundExtensions) {
         std::cout << "\t" << extension << "\n";
       }
       std::cout << "\n";
 
       std::cout << "Available extensions:" << "\n";
-      for(auto available : available_extensions) {
+      for(auto available : availableExtensions) {
         std::cout << "\t" << available.extensionName << "\n";
       }
 
@@ -104,30 +104,34 @@ namespace VulkanProject {
     return true;
   }
 
-  bool CreateVulkanInstance( VkInstance & vulkan_instance, VkApplicationInfo const & application_info, std::vector<const char *> const & desired_extensions ) {
-    std::vector<VkExtensionProperties> available_extensions;
-    if (!EnumerateAvailableInstanceExtensions(available_extensions)) {
+  bool CreateVulkanInstance(
+    VkInstance & vulkanInstance, 
+    VkApplicationInfo const & applicationInfo, 
+    std::vector<const char *> const & desiredExtensions 
+  ) {
+    std::vector<VkExtensionProperties> availableExtensions;
+    if (!EnumerateInstanceExtensions(availableExtensions)) {
       return false;
     }
 
-    if (!CheckDesiredExtensions(available_extensions, desired_extensions)) {
+    if (!CheckDesiredExtensions(availableExtensions, desiredExtensions)) {
       return false;
     }
 
-    VkInstanceCreateInfo instance_create_info = {
+    VkInstanceCreateInfo instanceCreateInfo = {
       VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO,
       nullptr,
       0,
-      &application_info,
+      &applicationInfo,
       0,
       nullptr,
-      static_cast<uint32_t>(desired_extensions.size()),
-      desired_extensions.data()
+      static_cast<uint32_t>(desiredExtensions.size()),
+      desiredExtensions.data()
     };
 
-    VkResult result = vkCreateInstance( &instance_create_info, nullptr, &vulkan_instance);
+    VkResult result = vkCreateInstance( &instanceCreateInfo, nullptr, &vulkanInstance);
 
-    if (result != VK_SUCCESS || vulkan_instance == VK_NULL_HANDLE) {
+    if (result != VK_SUCCESS || vulkanInstance == VK_NULL_HANDLE) {
       std::cout << "Could not create Vulkan instance\n";
       return false;
     }
@@ -135,9 +139,9 @@ namespace VulkanProject {
     return true;
   }
 
-  bool LoadInstanceLevelFunctions( VkInstance const & vulkan_instance, std::vector<char const *> const & enabled_extensions) {
+  bool LoadInstanceLevelFunctions( VkInstance const & vulkanInstance, std::vector<char const *> const & enabledExtensions) {
     #define INSTANCE_LEVEL_VULKAN_FUNCTION( name )                                \
-      name = (PFN_##name)vkGetInstanceProcAddr( vulkan_instance, #name );         \
+      name = (PFN_##name)vkGetInstanceProcAddr( vulkanInstance, #name );         \
       if( name == nullptr ) {                                                     \
         std::cout << "Could not load instance-level Vulkan function named: "      \
           #name << std::endl;                                                     \
@@ -146,9 +150,9 @@ namespace VulkanProject {
 
     // Load instance-level functions from enabled extensions
     #define INSTANCE_LEVEL_VULKAN_FUNCTION_FROM_EXTENSION( name, extension )      \
-      for( auto & enabled_extension : enabled_extensions ) {                      \
+      for( auto & enabled_extension : enabledExtensions ) {                      \
         if( std::string( enabled_extension ) == std::string( extension ) ) {      \
-          name = (PFN_##name)vkGetInstanceProcAddr( vulkan_instance, #name );     \
+          name = (PFN_##name)vkGetInstanceProcAddr( vulkanInstance, #name );     \
           if( name == nullptr ) {                                                 \
             std::cout << "Could not load instance-level Vulkan function named: "  \
               #name << std::endl;                                                 \
@@ -162,26 +166,26 @@ namespace VulkanProject {
     return true;
   }
 
-  bool EnumerateAvailablePhysicalDevices(
-    VkInstance const & vulkan_instance,
-    std::vector<VkPhysicalDevice> & available_devices
+  bool EnumeratePhysicalDevices(
+    VkInstance const & vulkanInstance,
+    std::vector<VkPhysicalDevice> & availableDevices
   ) {
-    uint32_t devices_count = 0;
+    uint32_t devicesCount = 0;
     VkResult result = VK_SUCCESS;
 
-    result = vkEnumeratePhysicalDevices(vulkan_instance, &devices_count, nullptr);
+    result = vkEnumeratePhysicalDevices(vulkanInstance, &devicesCount, nullptr);
     if (result != VK_SUCCESS) {
       std::cout << "Could not get number of available physical devices\n";
       return false;
     }
 
-    if (!devices_count) {
+    if (!devicesCount) {
       std::cout << "No available physical devices\n";
       return false;
     }
 
-    available_devices.resize(devices_count);
-    result = vkEnumeratePhysicalDevices(vulkan_instance, &devices_count, available_devices.data());
+    availableDevices.resize(devicesCount);
+    result = vkEnumeratePhysicalDevices(vulkanInstance, &devicesCount, availableDevices.data());
 
     if (result != VK_SUCCESS) {
       std::cout << "Could not enumerate physical devices\n";
@@ -191,9 +195,9 @@ namespace VulkanProject {
     return true;
   }
 
-  bool EnumerateAvailableDeviceExtensions ( 
+  bool EnumerateDeviceExtensions ( 
     VkPhysicalDevice physical_device, 
-    std::vector<VkExtensionProperties> & available_extensions
+    std::vector<VkExtensionProperties> & availableExtensions
   ) {
     uint32_t extension_count = 0;
     VkResult result = VK_SUCCESS;
@@ -205,11 +209,11 @@ namespace VulkanProject {
       return false;
     }
 
-    available_extensions.resize(extension_count);
+    availableExtensions.resize(extension_count);
     result = vkEnumerateDeviceExtensionProperties(
       physical_device, nullptr, 
       &extension_count, 
-      available_extensions.data()
+      availableExtensions.data()
     );
 
     if (result != VK_SUCCESS) {
@@ -220,17 +224,14 @@ namespace VulkanProject {
     return true;
   }
 
-  void GetFeaturesAndPropertiesOfPhysicalDevice( 
+  void GetPropertiesPhysicalDevice( 
     VkPhysicalDevice physical_device,
-    VkPhysicalDeviceFeatures & device_features,
     VkPhysicalDeviceProperties & device_properties 
   ) {
-    vkGetPhysicalDeviceFeatures( physical_device, &device_features );
-
     vkGetPhysicalDeviceProperties( physical_device, &device_properties );
   };
 
-  bool EnumerateAvailableQueueFamiliesAndTheirProperties(
+  bool EnumerateQueueFamilyAndProperties(
     VkPhysicalDevice physical_device,
     std::vector<VkQueueFamilyProperties> & queue_families
   ) {
@@ -250,6 +251,27 @@ namespace VulkanProject {
     }
 
     return true;
+  }
+
+  bool IndexOfDesiredQueueFamily(
+    VkPhysicalDevice const & physical_device,
+    VkQueueFlags const & desired_capabilities,
+    uint32_t & queue_family_index
+  ) {
+    std::vector<VkQueueFamilyProperties> queue_family_properties;
+    if (!VulkanProject::EnumerateQueueFamilyAndProperties(physical_device, queue_family_properties)) {
+      return false;
+    }
+
+    for (u_int32_t index = 0; index < static_cast<u_int8_t>(queue_family_properties.size()); index = index + 1) {
+      auto queue_family = queue_family_properties[index];
+      if (queue_family.queueFlags & desired_capabilities == desired_capabilities) {
+        queue_family_index = index;
+        return true;
+      }
+    }
+
+    return false;
   }
 } // namespace VulkanProject
 

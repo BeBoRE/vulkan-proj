@@ -13,7 +13,7 @@ namespace VulkanProject {
   bool ConnectVulkanLoader( LIBRARY_TYPE & vulkan_library );
   bool LoadExportedVulkanLoaderLibaryFunction( LIBRARY_TYPE const & vulkan_library );
   bool LoadGlobalLevelFunctions();
-  bool EnumerateAvailableInstanceExtensions( std::vector<VkExtensionProperties> & available_extensions );
+  bool EnumerateInstanceExtensions( std::vector<VkExtensionProperties> & available_extensions );
   bool CheckDesiredExtensions(
     std::vector<VkExtensionProperties> & available_extensions, 
     std::vector<char const *> const & desired_extensions 
@@ -27,21 +27,25 @@ namespace VulkanProject {
     VkInstance const & vulkan_instance, 
     std::vector<char const *> const & enabled_extensions
   );
-  bool EnumerateAvailablePhysicalDevices(
+  bool EnumeratePhysicalDevices(
     VkInstance const & vulkan_instance,
     std::vector<VkPhysicalDevice> & available_devices
   );
-  bool EnumerateAvailableDeviceExtensions ( 
+  bool EnumerateDeviceExtensions ( 
     VkPhysicalDevice physical_device, 
     std::vector<VkExtensionProperties> & available_extensions
   );
-  void GetFeaturesAndPropertiesOfPhysicalDevice( 
+  void GetPropertiesPhysicalDevice( 
     VkPhysicalDevice physical_device,
-    VkPhysicalDeviceFeatures & device_features,
     VkPhysicalDeviceProperties & device_properties 
   );
-  bool EnumerateAvailableQueueFamiliesAndTheirProperties(
+  bool EnumerateQueueFamilyAndProperties(
     VkPhysicalDevice physical_device,
     std::vector<VkQueueFamilyProperties> & queue_families
+  );
+  bool IndexOfDesiredQueueFamily(
+    VkPhysicalDevice const & physical_device,
+    VkQueueFlags const & desired_capabilities,
+    uint32_t & queue_family_index
   );
 }
