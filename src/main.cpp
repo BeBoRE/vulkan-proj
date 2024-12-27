@@ -28,8 +28,19 @@ int main()
   };
 
   std::vector<const char *> desiredExtensions = {
-    "VK_KHR_xlib_surface"
+    VK_KHR_SURFACE_EXTENSION_NAME,
+    #ifdef VK_USE_PLATFORM_WIN32_KHR
+      VK_KHR_WIN32_SURFACE_EXTENSION_NAME,
+    #elif defined VK_USE_PLATFORM_XCB_KHR
+      VK_KHR_XCB_SURFACE_EXTENSION_NAME,
+    #elif defined VK_USE_PLATFORM_XLIB_KHR
+      VK_KHR_XLIB_SURFACE_EXTENSION_NAME,
+    #endif
   };
+
+  for (auto extension : desiredExtensions) {
+    std::cout << extension << '\n';
+  }
 
   VkInstance vulkanInstance;
 
@@ -49,6 +60,8 @@ int main()
   VulkanProject::DestroyLogicalDevice(logicalDevice);
   VulkanProject::DestroyVulkanInstance(vulkanInstance);
   VulkanProject::CloseVulkanLoader(vulkanLibraryLoader);
+
+
 
   return EXIT_SUCCESS;
 }
