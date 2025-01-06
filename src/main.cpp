@@ -1,6 +1,9 @@
 #include "Loading.h"
+#include "Window.h"
 #include <iostream>
 #include <vector>
+
+#include <X11/Xlib.h>
 
 int main()
 {
@@ -29,18 +32,8 @@ int main()
 
   std::vector<const char *> desiredExtensions = {
     VK_KHR_SURFACE_EXTENSION_NAME,
-    #ifdef VK_USE_PLATFORM_WIN32_KHR
-      VK_KHR_WIN32_SURFACE_EXTENSION_NAME,
-    #elif defined VK_USE_PLATFORM_XCB_KHR
-      VK_KHR_XCB_SURFACE_EXTENSION_NAME,
-    #elif defined VK_USE_PLATFORM_XLIB_KHR
-      VK_KHR_XLIB_SURFACE_EXTENSION_NAME,
-    #endif
+    VK_KHR_XLIB_SURFACE_EXTENSION_NAME,
   };
-
-  for (auto extension : desiredExtensions) {
-    std::cout << extension << '\n';
-  }
 
   VkInstance vulkanInstance;
 
@@ -57,11 +50,24 @@ int main()
   success = VulkanProject::CreateLogicalDeviceWithComputeGraphics(vulkanInstance, logicalDevice, graphicsQueue, computeQueue);
   if (!success) return EXIT_FAILURE;
 
+  WindowParameters windowParameters;
+
+  success = VulkanProject::CreateDisplay(windowParameters);
+  if (!success) return EXIT_FAILURE;
+
+  success = VulkanProject::CreateWindow(vulkanInstance, windowParameters);
+  if (!success) return EXIT_FAILURE;
+
+  VkSurfaceKHR surface;
+
+  success = VulkanProject::CreateSurface(vulkanInstance, windowParameters, surface);
+  if (!success) return EXIT_FAILURE;
+
+  VulkanProject::DestroyWindow(vulkanInstance, windowParameters, surface);
+
   VulkanProject::DestroyLogicalDevice(logicalDevice);
   VulkanProject::DestroyVulkanInstance(vulkanInstance);
   VulkanProject::CloseVulkanLoader(vulkanLibraryLoader);
-
-
 
   return EXIT_SUCCESS;
 }
